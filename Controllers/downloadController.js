@@ -303,14 +303,15 @@ exports.downloadTxt = async (req, res, next) => {
                                 console.log(table.length)
                                 let data = JSON.stringify(table);
                                 const jsonData = JSON.parse(data);
+                                let date =Date.now()
+                                let file = `${tablename[i]}${date}.json`
                                 //console.log(data)
                                 //let pdf = fastFile(jsonData, "txt", res);
-                                fs.appendFile('myjsonfile.json', JSON.stringify(table), 'utf8', function (err) {
+                                fs.writeFile(file, JSON.stringify(table), 'utf8', function (err) {
                                     if (err) throw err;
                                     console.log('complete');
-                                }
-                                );
-                                
+                                });
+
                                 //console.log("jsonData", jsonData);
 
                                 /* if (jsonData) {
