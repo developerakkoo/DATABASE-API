@@ -165,9 +165,6 @@ exports.downloadCsv = async (req, res, next) => {
                                 let date = Date.now()
                                 let file = `files/${tablename}${date}.csv`
 
-                               /*  var worksheet = xlsx.utils.json_to_sheet(jsonData);
-                                console.log(worksheet) */
-
                                 converter.json2csv(table, (err, csv) => {
                                     if (err) {
                                         throw err
@@ -257,7 +254,7 @@ exports.downloadJson = async (req, res, next) => {
     try {
         let dbname = req.body.dbname;
         let tablename = req.body.tablename;
-        let separator = req.body.separator
+        let separator = req.body.separator;
         tablename = tablename.split(",")
 
         connection.connect(function (err) {
@@ -326,18 +323,17 @@ exports.downloadTxt = async (req, res, next) => {
                                 const jsonData = JSON.parse(data);
                                 let date = Date.now()
                                 let file = `files/${tablename}${date}.txt`
-                                fs.writeFile(file, data, 'utf8', function (err) {
-                                    if (err) throw err;
-                                    console.log('complete');
-                                });
-                                /* converter.json2csv(table, (err, csv) => {
+
+                                converter.json2csv(table, (err, csv) => {
                                     if (err) {
                                         throw err
                                     }
-                                    
-                                    // print CSV string
-                                    console.log(csv)
-                                }) */
+                                   
+                                    fs.writeFile(file, csv, 'utf8', function (err) {
+                                        if (err) throw err;
+                                        console.log('complete');
+                                    });
+                                })
                             });
                         }
                     }
