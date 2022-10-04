@@ -5,10 +5,29 @@ const { resourceLimits } = require("worker_threads");
 const ws = fs.createWriteStream("mydb.csv");
 const { connection } = require('../connection');
 const path = require("path")
-
-
+var zipdir = require('zip-dir');
+const converter = require('json-2-csv')
 const fastFile = require("fast-file-converter").default;
+const { convertCsvToXlsx } = require('@aternus/csv-to-xlsx');
+const csvtoexcelconverter = require('csvtoxlsxconverter');
+const PDFDocument = require('pdfkit');
+const xlsx = require("xlsx");
+const doc = new PDFDocument;
+var aspose = aspose || {};
+aspose.cells = require("aspose.cells");
+var loadOptions = aspose.cells.LoadOptions(aspose.cells.FileFormatType.CSV);
+var cv2json = require('../');
+var fonts = {
+    Roboto: {
+        normal: 'fonts/Roboto-Regular.ttf',
+        bold: 'fonts/Roboto-Medium.ttf',
+        italics: 'fonts/Roboto-Italic.ttf',
+        bolditalics: 'fonts/Roboto-MediumItalic.ttf'
+    }
+};
 
+var PdfPrinter = require('../node_modules/pdfmake/src/printer');
+var printer = new PdfPrinter(fonts);
 /* const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -76,14 +95,10 @@ exports.tableByDb = async (req, res, next) => {
 
         connection.connect(function (err) {
             let query1 = "SHOW TABLES FROM " + dbname;
-            //let query2="SHOW FULL TABLES IN "+ dbname + " WHERE TABLE_TYPE LIKE 'VIEW';"
 
             connection.query(query1, function (err, table, fields) {
                 if (err) throw err;
                 //console.log(table)
-                /* connection.query(query2, function (err, view, fields) {
-                    if (err) throw err;
-                    console.log(view) */
 
                 if (table) {
                     res.status(200).json({ table, message: "Tables Found!" });
@@ -103,15 +118,11 @@ exports.viewByDb = async (req, res, next) => {
         let dbname = req.body.dbname;
 
         connection.connect(function (err) {
-            //let query1 = "SHOW TABLES FROM " + dbname;
             let query2 = "SHOW FULL TABLES IN " + dbname + " WHERE TABLE_TYPE LIKE 'VIEW';"
 
             connection.query(query2, function (err, table, fields) {
                 if (err) throw err;
                 //console.log(table)
-                /* connection.query(query2, function (err, view, fields) {
-                    if (err) throw err;
-                    console.log(view) */
 
                 if (table) {
                     res.status(200).json({ table, message: "Tables Found!" });
@@ -129,90 +140,112 @@ exports.downloadCsv = async (req, res, next) => {
     try {
         let dbname = req.body.dbname;
         let tablename = req.body.tablename;
+        tablename = tablename.split(",")
 
         connection.connect(function (err) {
             let query1 = "USE " + dbname;
-            let query = "SELECT * FROM " + tablename;
-            //let query2="SHOW FULL TABLES IN "+ dbname + " WHERE TABLE_TYPE LIKE 'VIEW';"
 
             connection.query(query1, function (err, result, fields) {
                 if (err) throw err;
-                //console.log(result)
+                //console.log(tables)
+                for (i = 0; i < tablename.length; i++) {
+                    if (tablename.length >= 1) {
 
-                if (result) {
-                    connection.query(query, function (err, table, fields) {
-                        if (err) throw err;
-                        //console.log(table)
+                        let q = [];
+                        //if(tablename.length=1)
+                        let query = "SELECT * FROM " + tablename[i];
 
-                        const jsonData = JSON.parse(JSON.stringify(table, "|"));
+                        if (result) {
+                            connection.query(query, function (err, table, fields) {
+                                if (err) throw err;
+                                //console.log(table.length)
+                                let data = JSON.stringify(table);
+                                const jsonData = JSON.parse(data);
 
-                        let pdf = fastFile(jsonData, "csv", res);
+                                let date = Date.now()
+                                let file = `files/${tablename}${date}.csv`
 
-                        //console.log("jsonData", jsonData);
+                               /*  var worksheet = xlsx.utils.json_to_sheet(jsonData);
+                                console.log(worksheet) */
 
-                        /* if (jsonData) {
-                            res.status(200).json({ jsonData, message: "Data Found!" });
-                            //console.log(result);
-                        } */
-                        /* fastcsv
-                            .write(jsonData, { headers: true })
-                            .on("finish", function () {
-                                console.log("Write to mydb.csv successfully!");
-                            })
-                            .pipe(ws); */
-                        //console.log(table);
-                    });
-                    //res.send("C:/Users/Raj Gupta/DATABASE-API/mydb.csv")
+                                converter.json2csv(table, (err, csv) => {
+                                    if (err) {
+                                        throw err
+                                    }
+                                   
+                                    fs.writeFile(file, csv, 'utf8', function (err) {
+                                        if (err) throw err;
+                                        console.log('complete');
+                                    });
+                                    // print CSV string
+                                    //console.log(csv)
+                                })
+                            });
+                        }
+                    }
                 }
+
+                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files');//change file location for live server
+
+                res.set('Content-Type', 'application/octet-stream');
+                res.set('Content-Disposition', `attachment; filename=files.zip`);
+                //res.set('Content-Length', folder.length);
+                res.send(buffer);
             });
 
-        });
 
+        });
     } catch (error) {
         res.status(500).json({ error, message: "Something went wrong!" });
     }
 };
+
+
 exports.downloadPdf = async (req, res, next) => {
     try {
         let dbname = req.body.dbname;
-
         let tablename = req.body.tablename;
+        tablename = tablename.split(",")
+        console.log("data")
 
         connection.connect(function (err) {
             let query1 = "USE " + dbname;
-            let query = "SELECT * FROM " + tablename;
-            //let query2="SHOW FULL TABLES IN "+ dbname + " WHERE TABLE_TYPE LIKE 'VIEW';"
 
             connection.query(query1, function (err, result, fields) {
                 if (err) throw err;
-                //console.log(result)
 
-                if (result) {
-                    connection.query(query, function (err, table, fields) {
-                        if (err) throw err;
-                        //console.log(table)
+                for (i = 0; i < tablename.length; i++) {
+                    if (tablename.length >= 1) {
 
-                        const jsonData = JSON.parse(JSON.stringify(table, "|"));
-                        console.log(jsonData)
+                        let query = "SELECT * FROM " + tablename[i];
 
-                        let pdf = fastFile(jsonData, "pdf", res);
+                        if (result) {
+                            connection.query(query, function (err, table, fields) {
+                                if (err) throw err;
 
-                        //console.log("jsonData", jsonData);
-
-                        /* if (jsonData) {
-                            res.status(200).json({ jsonData, message: "Data Found!" });
-                            //console.log(result);
-                        } */
-                        /* fastcsv
-                            .write(jsonData, { headers: true })
-                            .on("finish", function () {
-                                console.log("Write to mydb.csv successfully!");
-                            })
-                            .pipe(ws); */
-                        //console.log(table);
-                    });
-                    //res.send("C:/Users/Raj Gupta/DATABASE-API/mydb.csv")
+                                let data = JSON.stringify(table);
+                                const jsonData = JSON.parse(data);
+                                let date = Date.now()
+                                let file = `files/${tablename}${date}.pdf`
+                                doc.addPage()
+                                var pdfDoc = printer.createPdfKitDocument(jsonData);
+                                console.log(pdfDoc)
+                                pdfDoc.pipe(fs.createWriteStream(file));
+                                pdfDoc.end();
+                                fs.writeFile(file, data, 'utf8', function (err) {
+                                    if (err) throw err;
+                                    console.log('complete');
+                                });
+                            });
+                        }
+                    }
                 }
+                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files');//change file location for live server
+
+                res.set('Content-Type', 'application/octet-stream');
+                res.set('Content-Disposition', `attachment; filename=files.zip`);
+                //res.set('Content-Length', folder.length);
+                res.send(buffer);
             });
         });
     } catch (error) {
@@ -223,43 +256,44 @@ exports.downloadPdf = async (req, res, next) => {
 exports.downloadJson = async (req, res, next) => {
     try {
         let dbname = req.body.dbname;
-
         let tablename = req.body.tablename;
+        let separator = req.body.separator
+        tablename = tablename.split(",")
 
         connection.connect(function (err) {
             let query1 = "USE " + dbname;
-            let query = "SELECT * FROM " + tablename;
-            //let query2="SHOW FULL TABLES IN "+ dbname + " WHERE TABLE_TYPE LIKE 'VIEW';"
 
             connection.query(query1, function (err, result, fields) {
                 if (err) throw err;
-                //console.log(result)
 
-                if (result) {
-                    connection.query(query, function (err, table, fields) {
-                        if (err) throw err;
-                        //console.log(table)
+                for (i = 0; i < tablename.length; i++) {
+                    if (tablename.length >= 1) {
 
-                        const jsonData = JSON.parse(JSON.stringify(table, "|"));
+                        let query = "SELECT * FROM " + tablename[i];
 
-                        let pdf = fastFile(jsonData, "json", res);
+                        if (result) {
+                            connection.query(query, function (err, table, fields) {
+                                if (err) throw err;
 
-                        //console.log("jsonData", jsonData);
-
-                        /* if (jsonData) {
-                            res.status(200).json({ jsonData, message: "Data Found!" });
-                            //console.log(result);
-                        } */
-                        /* fastcsv
-                            .write(jsonData, { headers: true })
-                            .on("finish", function () {
-                                console.log("Write to mydb.csv successfully!");
-                            })
-                            .pipe(ws); */
-                        //console.log(table);
-                    });
-                    //res.send("C:/Users/Raj Gupta/DATABASE-API/mydb.csv")
+                                let data = JSON.stringify(table);
+                                const jsonData = JSON.parse(data);
+                                let data1 = JSON.stringify(jsonData, null, separator);
+                                let date = Date.now()
+                                let file = `files/${tablename}${date}.json`
+                                fs.writeFile(file, data1, 'utf8', function (err) {
+                                    if (err) throw err;
+                                    console.log('complete');
+                                });
+                            });
+                        }
+                    }
                 }
+                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files');//change file location for live server
+
+                res.set('Content-Type', 'application/octet-stream');
+                res.set('Content-Disposition', `attachment; filename=files.zip`);
+                //res.set('Content-Length', folder.length);
+                res.send(buffer);
             });
         });
     } catch (error) {
@@ -271,66 +305,50 @@ exports.downloadJson = async (req, res, next) => {
 exports.downloadTxt = async (req, res, next) => {
     try {
         let dbname = req.body.dbname;
-        //let tables = ["shop",  "transactions","employees","price"];
-        //console.log(tables.length)
         let tablename = req.body.tablename;
         tablename = tablename.split(",")
-        //tables.push(tablename);
-        //console.log(tablename.length)
 
         connection.connect(function (err) {
             let query1 = "USE " + dbname;
 
             connection.query(query1, function (err, result, fields) {
                 if (err) throw err;
-                //console.log(tables)
-                for (i = 0; i < tablename.length; i++) {
-                    if (tablename.length > 1) {
 
-                        let q = [];
-                        //if(tablename.length=1)
+                for (i = 0; i < tablename.length; i++) {
+                    if (tablename.length >= 1) {
+
                         let query = "SELECT * FROM " + tablename[i];
-                        //console.log(query)
-                        //console.log(query.length)
-                        //query = query.toArray();
-                        q.push(query)
-                        //console.log(q.length)
-                        let p = [];
-                        p.concat(query)
                         if (result) {
                             connection.query(query, function (err, table, fields) {
                                 if (err) throw err;
                                 console.log(table.length)
                                 let data = JSON.stringify(table);
                                 const jsonData = JSON.parse(data);
-                                let date =Date.now()
-                                let file = `${tablename[i]}${date}.json`
-                                //console.log(data)
-                                //let pdf = fastFile(jsonData, "txt", res);
-                                fs.writeFile(file, JSON.stringify(table), 'utf8', function (err) {
+                                let date = Date.now()
+                                let file = `files/${tablename}${date}.txt`
+                                fs.writeFile(file, data, 'utf8', function (err) {
                                     if (err) throw err;
                                     console.log('complete');
                                 });
-
-                                //console.log("jsonData", jsonData);
-
-                                /* if (jsonData) {
-                                    res.status(200).json({ jsonData, message: "Data Found!" });
-                                    //console.log(result);
-                                } */
-                                /* fastcsv
-                                    .write(jsonData, { headers: true })
-                                    .on("finish", function () {
-                                        console.log("Write to mydb.csv successfully!");
-                                    })
-                                    .pipe(ws); */
-                                //console.log(table);
+                                /* converter.json2csv(table, (err, csv) => {
+                                    if (err) {
+                                        throw err
+                                    }
+                                    
+                                    // print CSV string
+                                    console.log(csv)
+                                }) */
                             });
-                        }  //res.send("C:/Users/Raj Gupta/DATABASE-API/myjsonfile.json")
+                        }
                     }
                 }
 
+                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files');//change file location for live server
 
+                res.set('Content-Type', 'application/octet-stream');
+                res.set('Content-Disposition', `attachment; filename=files.zip`);
+                //res.set('Content-Length', folder.length);
+                res.send(buffer);
             });
 
 
@@ -344,6 +362,7 @@ exports.downloadTxt = async (req, res, next) => {
 /* 
 exports.downloadPdf = async (req, res, next) => {
     try {
+
         const filePath = path.resolve("./mydb.csv")
 
         const destinationPath = path.resolve("./mydb")
@@ -355,8 +374,8 @@ exports.downloadPdf = async (req, res, next) => {
     } catch (error) {
         res.status(500).json({ error, message: "Something went wrong!" });
     }
-};
- */
+}; */
+
 /* exports.downloadTsv = async (req, res, next) => {
     try {    
         var tsv = aoot.tsv("C:/Users/Raj Gupta/DATABASE-API/mydb.csv")
