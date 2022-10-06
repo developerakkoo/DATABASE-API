@@ -172,7 +172,7 @@ exports.downloadCsv = async (req, res, next) => {
                                 const jsonData = JSON.parse(data);
 
                                 let date = Date.now()
-                                let file = `files/${tablename}${date}.csv`
+                                let file = `files/csv/${tablename}${date}.csv`
                                 let options = {
                                     delimiter: {
                                         field: separator,
@@ -197,7 +197,7 @@ exports.downloadCsv = async (req, res, next) => {
                     }
                 }
 
-                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files');//change file location for live server
+                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files/csv');//change file location for live server
 
                 res.set('Content-Type', 'application/octet-stream');
                 res.set('Content-Disposition', `attachment; filename=files.zip`);
@@ -238,7 +238,7 @@ exports.downloadPdf = async (req, res, next) => {
                                 let data = JSON.stringify(table);
                                 const jsonData = JSON.parse(data);
                                 let date = Date.now()
-                                let file = `files/${tablename}${date}.pdf`
+                                let file = `files/pdf/${tablename}${date}.pdf`
                                 doc.addPage()
                                 var pdfDoc = printer.createPdfKitDocument(jsonData);
                                 console.log(pdfDoc)
@@ -252,7 +252,7 @@ exports.downloadPdf = async (req, res, next) => {
                         }
                     }
                 }
-                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files');//change file location for live server
+                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files/pdf');//change file location for live server
 
                 res.set('Content-Type', 'application/octet-stream');
                 res.set('Content-Disposition', `attachment; filename=files.zip`);
@@ -291,7 +291,7 @@ exports.downloadJson = async (req, res, next) => {
                                 const jsonData = JSON.parse(data);
                                 let data1 = JSON.stringify(jsonData, null, separator);
                                 let date = Date.now()
-                                let file = `files/${tablename}${date}.json`
+                                let file = `files/json/${tablename}${date}.json`
                                 fs.writeFile(file, data1, 'utf8', function (err) {
                                     if (err) throw err;
                                     console.log('complete');
@@ -300,7 +300,7 @@ exports.downloadJson = async (req, res, next) => {
                         }
                     }
                 }
-                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files');//change file location for live server
+                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files/json');//change file location for live server
 
                 res.set('Content-Type', 'application/octet-stream');
                 res.set('Content-Disposition', `attachment; filename=files.zip`);
@@ -319,6 +319,7 @@ exports.downloadTsv = async (req, res, next) => {
         let dbname = req.body.dbname;
         let tablename = req.body.tablename;
         tablename = tablename.split(",")
+        let separator = req.body.separator;
 
         connection.connect(function (err) {
             let query1 = "USE " + dbname;
@@ -333,14 +334,14 @@ exports.downloadTsv = async (req, res, next) => {
                         if (result) {
                             connection.query(query, function (err, table, fields) {
                                 if (err) throw err;
-                                console.log(table.length)
+
                                 let data = JSON.stringify(table);
                                 const jsonData = JSON.parse(data);
                                 let date = Date.now()
-                                let file = `files/${tablename}${date}.tsv`
+                                let file = `files/tsv/${tablename}${date}.tsv`
                                 let options = {
                                     delimiter: {
-                                        field: "   ", separator,
+                                        field: "    " + separator,
                                     },
 
                                 };
@@ -368,7 +369,7 @@ exports.downloadTsv = async (req, res, next) => {
                     }
                 }
 
-                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files');//change file location for live server
+                var buffer = zipdir('C:/Users/Raj Gupta/DATABASE-API/files/tsv');//change file location for live server
 
                 res.set('Content-Type', 'application/octet-stream');
                 res.set('Content-Disposition', `attachment; filename=files.zip`);
