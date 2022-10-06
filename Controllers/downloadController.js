@@ -101,12 +101,13 @@ exports.tableByDb = async (req, res, next) => {
         connection.connect(function (err) {
             let query1 = "SHOW TABLES FROM " + dbname;
 
-            connection.query(query1, function (err, table, fields) {
+            connection.query(query1, function (err, tables, fields) {
                 if (err) throw err;
                 //console.log(table)
+                const result = tables.map((table) => table["Tables_in_" + dbname]);
 
-                if (table) {
-                    res.status(200).json({ table, message: "Tables Found!" });
+                if (result) {
+                    res.status(200).json({ result, message: "Tables Found!" });
                     //console.log(result);
                 }
             });
@@ -125,12 +126,13 @@ exports.viewByDb = async (req, res, next) => {
         connection.connect(function (err) {
             let query2 = "SHOW FULL TABLES IN " + dbname + " WHERE TABLE_TYPE LIKE 'VIEW';"
 
-            connection.query(query2, function (err, table, fields) {
+            connection.query(query2, function (err, tables, fields) {
                 if (err) throw err;
                 //console.log(table)
+                const result = tables.map((table) => table["Tables_in_" + dbname]);
 
-                if (table) {
-                    res.status(200).json({ table, message: "Tables Found!" });
+                if (result) {
+                    res.status(200).json({ result, message: "Tables Found!" });
                     //console.log(result);
                 }
             });
@@ -172,10 +174,10 @@ exports.downloadCsv = async (req, res, next) => {
                                 let date = Date.now()
                                 let file = `files/${tablename}${date}.csv`
                                 let options = {
-                                    delimiter : {
-                                        field : separator,
+                                    delimiter: {
+                                        field: separator,
                                     },
-                                    
+
                                 };
                                 let json2csvCallback = function (err, csv) {
                                     if (err) throw err;
@@ -184,12 +186,12 @@ exports.downloadCsv = async (req, res, next) => {
                                         console.log('complete');
                                     });
                                 };
-                                converter.json2csv(table,json2csvCallback,options)
+                                converter.json2csv(table, json2csvCallback, options)
                                 /* converter.json2csv(table, (err, csv) => {
                                     if (err) {
                                         throw err
                                     } */
-                                
+
                             });
                         }
                     }
@@ -337,10 +339,10 @@ exports.downloadTsv = async (req, res, next) => {
                                 let date = Date.now()
                                 let file = `files/${tablename}${date}.tsv`
                                 let options = {
-                                    delimiter : {
-                                        field : "   ",separator,
+                                    delimiter: {
+                                        field: "   ", separator,
                                     },
-                                    
+
                                 };
                                 let json2csvCallback = function (err, csv) {
                                     if (err) throw err;
@@ -349,8 +351,8 @@ exports.downloadTsv = async (req, res, next) => {
                                         console.log('complete');
                                     });
                                 };
-                                converter.json2csv(table,json2csvCallback,options)
-                                
+                                converter.json2csv(table, json2csvCallback, options)
+
                                 /* converter.json2csv(table, (err, csv) => {
                                     if (err) {
                                         throw err
