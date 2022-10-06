@@ -17,6 +17,11 @@ var aspose = aspose || {};
 aspose.cells = require("aspose.cells");
 var loadOptions = aspose.cells.LoadOptions(aspose.cells.FileFormatType.CSV);
 var cv2json = require('../');
+var Parser = require('tsv').Parser
+//var CSV = new Parser(",", { header: false })
+const CSV = require('./csv')
+//var csv = new CSV(data);
+const { tsv2json, json2tsv } = require('tsv-json');
 var fonts = {
     Roboto: {
         normal: 'fonts/Roboto-Regular.ttf',
@@ -141,6 +146,8 @@ exports.downloadCsv = async (req, res, next) => {
         let dbname = req.body.dbname;
         let tablename = req.body.tablename;
         tablename = tablename.split(",")
+        let separator = req.body.separator;
+
 
         connection.connect(function (err) {
             let query1 = "USE " + dbname;
@@ -164,19 +171,25 @@ exports.downloadCsv = async (req, res, next) => {
 
                                 let date = Date.now()
                                 let file = `files/${tablename}${date}.csv`
-
-                                converter.json2csv(table, (err, csv) => {
-                                    if (err) {
-                                        throw err
-                                    }
-                                   
+                                let options = {
+                                    delimiter : {
+                                        field : separator,
+                                    },
+                                    
+                                };
+                                let json2csvCallback = function (err, csv) {
+                                    if (err) throw err;
                                     fs.writeFile(file, csv, 'utf8', function (err) {
                                         if (err) throw err;
                                         console.log('complete');
                                     });
-                                    // print CSV string
-                                    //console.log(csv)
-                                })
+                                };
+                                converter.json2csv(table,json2csvCallback,options)
+                                /* converter.json2csv(table, (err, csv) => {
+                                    if (err) {
+                                        throw err
+                                    } */
+                                
                             });
                         }
                     }
@@ -299,7 +312,7 @@ exports.downloadJson = async (req, res, next) => {
 };
 
 
-exports.downloadTxt = async (req, res, next) => {
+exports.downloadTsv = async (req, res, next) => {
     try {
         let dbname = req.body.dbname;
         let tablename = req.body.tablename;
@@ -322,18 +335,32 @@ exports.downloadTxt = async (req, res, next) => {
                                 let data = JSON.stringify(table);
                                 const jsonData = JSON.parse(data);
                                 let date = Date.now()
-                                let file = `files/${tablename}${date}.txt`
-
-                                converter.json2csv(table, (err, csv) => {
-                                    if (err) {
-                                        throw err
-                                    }
-                                   
+                                let file = `files/${tablename}${date}.tsv`
+                                let options = {
+                                    delimiter : {
+                                        field : "   ",separator,
+                                    },
+                                    
+                                };
+                                let json2csvCallback = function (err, csv) {
+                                    if (err) throw err;
                                     fs.writeFile(file, csv, 'utf8', function (err) {
                                         if (err) throw err;
                                         console.log('complete');
                                     });
-                                })
+                                };
+                                converter.json2csv(table,json2csvCallback,options)
+                                
+                                /* converter.json2csv(table, (err, csv) => {
+                                    if (err) {
+                                        throw err
+                                    }
+
+                                    fs.writeFile(file, csv, 'utf8', function (err) {
+                                        if (err) throw err;
+                                        console.log('complete');
+                                    });
+                                }) */
                             });
                         }
                     }
