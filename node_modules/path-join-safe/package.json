@@ -1,0 +1,25 @@
+{
+  "name": "path-join-safe",
+  "version": "1.0.0",
+  "description": "Join pathes, return undefined if resulting path is not inside of the first path.",
+  "main": "path-join-safe.js",
+  "scripts": {
+    "test": "mocha"
+  },
+	"devDependencies": {
+		"mocha": "^3.0.0",
+		"chai": "^3.0.0"
+	},
+  "keywords": [
+    "path",
+    "join",
+    "safe",
+    "restrict",
+    "directory",
+    "unsafe",
+    "subdirectory",
+    "folder"
+  ],
+  "author": "grabantot",
+  "license": "ISC"
+}

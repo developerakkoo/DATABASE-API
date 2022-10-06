@@ -2,7 +2,6 @@ const mysql = require("mysql");
 const fastcsv = require("fast-csv");
 const fs = require("fs");
 const { resourceLimits } = require("worker_threads");
-const ws = fs.createWriteStream("mydb.csv");
 const { connection } = require('../connection');
 const path = require("path")
 var zipdir = require('zip-dir');

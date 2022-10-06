@@ -9,7 +9,7 @@ const connectionRoute = require("./Routes/connectionRoute");
 
 const port = 3000;
 const app = express();
-
+const fileserver = require('express-fileserver')
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(cors());
@@ -33,6 +33,11 @@ app.use(connectionRoute);
 app.get('/', (req, res) => {
   res.render('home');
 })
+
+
+app.use('/getcsv', fileserver('./files/csv/'))
+//app.use('/getcsv', fileserver('./files/csv/'))
+
 
 app.use((err, req, res, next) => {
   console.log(err);
